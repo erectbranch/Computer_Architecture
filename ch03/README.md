@@ -273,3 +273,147 @@ counter도 하나의 schematic 기호로 표현할 수 있다. 종류에 따라 
 ![레지스터](images/register.png)
 
 ---
+
+## 3.5 메모리 조직과 주소 지정
+
+register를 이용해서 쉽게 여러 bit를 저장할 수 있게 되었다. 그렇지만 훨씬 더 많은 정보를 저장해야 한다면 어떻게 해야 할까? 우선 레지스터를 많이 쌓아야 한다.
+
+![여러 레지스터](images/n_registers.png)
+
+하지만 이렇게 쌓으면 어떤 register를 사용해야 할지 막막하다. 따라서 각 register마다 번호를 부여한다. decoder와 함께 사용하는 것으로 이런 처리가 가능하며, 이 번호를 **address**(주소)라고 부른다.
+
+또한 지정한 address에 해당하는 output은 selector(선택기)를 사용해서 얻을 수 있다.
+
+이렇게 구성한 메모리 컴포넌트의 output들을 한 output으로 연결해야 할 수도 있다. 이런 경우 **tri-state**라는 또 다른 기본 요소가 필요하다.
+
+![메모리 컴포넌트](images/memory_component.png)
+
+이런 메모리 컴포넌트는 연결 지점이 굉장히 많다. 32bit 수를 다루고 싶다면 input과 output을 32개씩 연결해야 하며, address, 제어 신호, 전원도 연결해야 한다.
+
+> input과 output data 연결을 합치고, $read/\overline{write}$ 제어 신호를 사용하면서 연결을 많이 줄일 수 있다.
+
+![단순화한 메모리 칩](images/memory_chip.png)
+
+위에서 address와 data는 큰 화살표로 표시했는데, 이런 식으로 연관된 신호를 **bus**(버스)라고 부른다. 즉, address bus, data bus가 있는 것이다.
+
+---
+
+### 3.5.1 addressing
+
+메모리 크기가 늘어날 수록 address로 연결해야 하는 bit 수도 늘어난다. 따라서 교통 관리 문제와 같이 정리가 필요한데, 메모리 칩 내부 address를 row, column으로 구성된 격자처럼 관리한다.
+
+![열과 행 어드레싱](images/row_column_addressing.png)
+
+row를 담당하는 decoder, column을 담당하는 decoder를 조합해 address를 지정한다. 위 그림은 address가 16개밖에 존재하지 않지만, 이보다 더 많은 메모리가 존재하면 효율적인 방법이 필요하게 된다.
+
+아래는 row, column address를 **multiplexing**(멀티플렉싱)한 것이다. 이 방법을 적용하면 address line의 수를 반으로 줄일 수 있다. register는 multiplexing한 주소를 저장한다.
+
+![멀티플렉싱](images/multiplexing.png)
+
+위 그림에서는 주소가 두 부분으로 나뉘어 들어오게 된다. row를 먼저 지정한 뒤 column 주소만 변화시키는 방식으로 좀 더 빠르게 처리할 수도 있다.(오늘날 메모리 칩은 이런 식으로 처리한다.)
+
+> depth * width로 크기를 표현할 수 있다. 예를 들어 256 $\times$ 8 칩은 row가 8, column이 256인 메모리 지점을 제공한다. 
+
+---
+
+## 3.6 RAM(Random Access Memory)
+
+지금까지 살펴본 memory를 바로 **RAM**(Random Access Memory, 임의 접근 메모리)라고 한다. address에 따라 원하는 곳은 어디든지 원하는 순서에 따라 쓸 수 있었다.
+
+RAM은 크게 두 가지로 나눌 수 있다.
+
+1. SRAM(static RAM)
+
+**SRAM**(정적 RAM)은 비싸지만 매우 빠르다. 각 bit에 트랜지스터가 6개씩 들어간다. 이 때문에 공간을 차지하므로 굉장히 많은 bit(수십억~수조)를 저장하기 위해 쓰기는 어렵다.
+
+2. DRAM(dynamic RAM)
+
+**DRAM**(동적 RAM)은 capacitor와 트랜지스터 1개만을 사용한다. 하지만 capacitor 특성상 주기적으로 **refresh**를 해야 한다는 단점이 있다. 또한 refresh 시점과, 정보를 write하는 시점이 겹치면 안 된다.
+
+집적도를 높게 구성할 수 있기 때문에, address가 많은 큰 메모리칩에 사용한다.(따라서 multiplexing도 사용한다.)
+
+> 여러 요인으로 인해 row address를 저장하는 속도가 column address를 변경하는 속도보다 더 빠르다.
+
+SRAM과 DRAM 모두 **volatile**(휘발성) memory이다. 전원이 (잠깐 혹은 완전히) 끊기면 data가 모두 사라지게 된다.
+
+> non-volatile RAM으로 **core** memory가 있는데, bit를 토러스 모양(toroidal, 도넛 모양)의 쇳조각에 저장한다. 오래된 기술이지만, non-valatile한 성질 때문에 장점을 살리려는 연구가 지속되고 있다.
+
+---
+
+## 3.7 ROM(Read-Only Memory)
+
+**ROM**(Read-Only Memory, 읽기 전용 메모리)는 사실 그리 정확한 이름은 아니다. 한 번만 쓸 수 있는 메모리(write-once memory) 정도가 더 정확할 것이다. 이 말대로 한 번 쓰고 나면 data를 (반)영구적으로 여러 차례 읽을 수 있다. 
+
+> 전자레인지처럼 가전제품의 소프트웨어를 한 차례 내장하고 읽기만 하는 식으로 ROM을 사용하기도 한다.(ROM에 담긴 소프트웨어를 펌웨어라고 했다. 지금은 ROM에 담기지 않아도 펌웨어라고 지칭하는 경우가 많다.)
+
+> 컴퓨터의 BIOS도 ROM에 담기며, 게임 패키지와 같이 정보의 무결성이 무조건적으로 보장되어야 하는 기록물에도 쓰인다. 예전 게임 패키지를 롬 파일이라고 부른 이유이다.
+
+삭제나 수정이 가능한 ROM도 있으나 대부분은 오래 걸리거나 비싼 단점을 가지고 있다.
+
+---
+
+## 3.8 block device
+
+**mass storage**(대형 저장장치)로 알려진 **disk drive**(디스크 드라이브)는 굉장히 많은 데이터를 저장하기 알맞다. 자화된 platter에 bit를 저장하며, platter가 돌아가면서 데이터가 저장된 위치에 도달하면 disk head가 데이터를 읽는다.
+
+> 하드 디스크라고 부르기도 한다.
+
+하지만 이런 원리 때문에 방금 헤드가 데이터를 지나쳤다면, 회전판이 거의 1바퀴를 돌 때까지 기다려야 한다.(거의 8밀리초) 게다가 기계 부품이 오염이나 마모에 취약하다.
+
+> 이런 점 때문에 기록 밀도와 속도를 맞바꾼 기억 장치로 볼 수 있다.
+
+대신 memory와 같은 address나 연결을 위한 공간이 필요 없다. **block** 단위(**sector**)로 address를 지정해서 읽는다.
+
+![디스크 레이아웃](images/disk_layout.png)
+
+원래는 sector당 512 byte를 저장했으나, 현재는 4,096 byte를 저장한다. 그러나 이 disk에서 한 byte만 바꾸고 싶어도, block 전체를 읽고 원하는 byte를 바꾼 뒤 block을 아예 다시 써야 한다.
+
+모든 sector마다 bit 수가 같으므로, $mm^2$ 당 bit 수(bit density)는 안쪽이 더 높다. 따라서 최근에는 외부 영역에 더 많은 sector를 넣는 방식으로 이 문제를 해결하고 있다.
+
+> CD, DVD 같은 optical disk(광학 디스크)는 자성 대신 빛을 이용해서 데이터를 저장한다. 대량으로 찍어낼 수 있는 장점이 있다.
+
+---
+
+## 3.9 flash memory
+
+**flash memory**(플래시 메모리)는 최근 나타난 EEPROM(전기로 지울 수 있는 ROM) 유형 매체이다. ROM이지만 MOSFET에 floating gate를 추가한 구조로 RAM과 유사한 측면도 있다.
+
+> ROM에서 나왔고 비슷한 측면이 있지만, 하드 디스크의 sector와 같은 page 단위로 접근한다는 특성 때문에 보조 기억 장치로 분류된다.
+
+원하는 address를 마음대로 읽을 수 있지만, 빈 flash memory에 데이터를 기록하기 위해서는 먼저 0을 채워 넣어야 한다. 또한 0을 1로 바꿀 수는 있지만, 전체를 지우지 않고 원하는 비트만 0으로 바꿀 수는 없다.
+
+이런 낭비를 줄이기 위해서 flash memory는 블록 단위로 나뉘게 되며, 값을 블록 단위로 지우고 쓰게 된다.
+
+> 읽을 때는 **random access**(임의 접근) 장치, 쓸 때는 **block access** 장치인 것이다.
+
+이런 flash memory를 disk drive 모양의 패키지에 넣는 것이 **SSD**(solid-state drive)이다.
+
+> flash memory는 여러 번 쓰고 지우는 수명이 존재하기 때문에, SSD에서는 모든 블록이 가능하면 똑같은 수준으로 낡도록 조정하는 프로세서가 들어 있다.
+
+---
+
+## 3.10 오류 감지와 정정
+
+데이터 오류는 종종 발생한다. 가령 우주 방사선이 memory에 닿아서 bit가 잘못될 수도 있다. 이럴 때 어떻게 오류를 알 수 있을까?
+
+단순히 복사본 하나를 만드는 방법으로는 어떤 데이터가 문제가 생겼을 때, 어느 쪽이 정답인지 알 수 없어서 문제를 해결할 수 없다. 따라서 3벌을 만드는 방식도 가능하지만, 이는 아주 혹독한 환경이 아니면 실행하는 방식이 아니다.(우주선에서는 이런 방식을 쓴다.)
+
+- parity
+
+**parity**(패리티)를 사용하면 단 1bit만 데이터가 잘못되어도 문제를 감지할 수 있다. 데이터에서 1로 설정된 bit의 수를 센 뒤, 그 개수가 짝수인지 홀수인지를 나타내는 1bit를 데이터에 덧붙이는 방법이다.
+
+> 모든 데이터에 XOR을 취하면 쉽게 알 수 있다.
+
+**even parity**(짝수 패리티)는 모든 bit를 서로 XOR한 값을 사용하며, **odd parity**(홀수 패리티)는 이 값의 complement를 사용한다.
+
+![even parity 검사](images/even_parity.png)
+
+위 그림 중 왼쪽은 even parity 검사를 시행한 그림이다. 오른쪽은 parity 검사를 나타낸다.
+
+> 그러나 오류가 짝수 번 일어나서 문제를 인식하지 못할 수 있다. 정적인 데이터보다 주로 끊임없이 변하는 데이터를 처리할 때 사용한다.
+
+- checksum, CRC
+
+정적인 데이터에서는 더 값싼 방법으로 검사할 수 있다. 단순한 방법으로 **checksum**, **CRC**(cyclic redundancy check, 순환 중복 검사) 등이 있다.
+
+---

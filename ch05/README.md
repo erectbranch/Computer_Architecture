@@ -119,17 +119,17 @@ function subdivide(x, y, size) {
 
 > 더 이상 아래로 내려갈 화살표가 없으면 옆에 있는 화살표로 넘어가는 방식은, **depth-first traversal**(깊이 우선 순회)라고 한다. 반대로 옆에 있는 화살표를 먼저 방문하고 그 후 아래로 내려가면 **breadth-first traversal**(너비 우선 순회)라고 한다.
 
-그런데 이전에 살핀 함수는 return address를 한 군데에만 저장했다. 즉, 이 방식대로는 return address를 덮어쓰기 때문에 재귀 함수를 구현할 수 없다.(사실 이 방식이라면 recursion이 아니라도 함수 내에서 다른 함수를 호출하는 것이 불가능하다.)
+그런데 이전에 살핀 함수는 return address를 한 군데에만 저장했다. 즉, 이 방식대로는 return address를 덮어쓰기 때문에 재귀 함수를 구현할 수 없다.(사실 이 방식이라면 recursion이 아니라도 함수 내에서 다른 함수를 호출하는 것도 불가능하다.)
 
-따라서 이런 문제를 해결하려면 return address를 여럿 저장할 수 있게 구성해야 한다. 또한 return마다 어느 지점으로 돌아갈지를 결정할 수 있어야 한다. 또한 한번 return하면 더 이상 return address는 기억할 필요가 없다.
+따라서 이런 문제를 해결하려면 return address를 여럿 저장할 수 있게 구성해야 한다. 또한 return마다 어느 지점으로 돌아갈지도 결정할 수 있어야 한다. 대신 한 차례 return하면 더 이상 이 return address는 기억할 필요가 없다.
 
-이를 **stack**(스택)을 이용해 해결할 수 있다. 접시 맨 위의 return address로 return한 뒤 제거하면 다음 return address를 사용할 수 있다.(LIFO, last in, first out) 함수 invoke마다 address를 **push**하고, return을 할 때는 **pop**을 해서 address를 가져온다.
+이 문제를 **stack**(스택)을 이용하면 해결할 수 있다. 접시 맨 위의 return address로 return한 뒤 제거하면 다음 return address를 사용할 수 있다.(LIFO, last in, first out) 함수 invoke마다 address를 **push**하고, return을 할 때는 **pop**을 해서 address를 가져온다.
 
 > push하면서 더 이상 공간이 없으면 이를 **stack overflow**, 반대로 빈 stack에서 무언가 가져오려고 하면 **stack underflow**라고 한다.
 
 > 소프트웨어로 stack overflow를 검사하지 않아도 되도록 돕는 **limit register**도 존재한다. 소프트웨어가 제한을 넘어선다면 **exception**을 발생시킨다.
 
-return address를 예시로 들었지만, **local variale**(지역 변수)도 stack으로 기억한다. 이렇게 각각의 함수 호출이 서로 독립적이게 된다. 이렇게 invoke마다 stack에 저장되는 데이터 모음을 **stack frame**이라고 한다.
+return address를 예시로 들었지만, **local variale**(지역 변수)도 stack으로 기억한다. 이렇게 각각의 함수 호출이 서로 독립적이게 된다. 이렇게 invoke마다 stack에 저장되는 데이터 모음을 **stack frame**(스택 프레임)이라고 한다.
 
 ![예시 스택 프레임](images/stack_frame.png)
 
@@ -205,9 +205,11 @@ CPU가 주의를 기울여야 하는 peripheral은 interrupt request를 생성�
 
 > 많은 기게가 물리적인 address를 벗어나려고 하거나, stack overflow를 일으키는 등 예외 상황에서 interrupt vector를 제공한다. exception을 interrupt handler가 문제를 해결하면서 계속 program을 실행할 수 있는 경우도 존재한다.
 
-또한 interrupt의 on/off와 priority도 설정할 수 있다. **mask**(마스크)를 사용하면 interrupt를 중단할 수 있다. priority를 설정해 두면, 더 중요한 interrupt를 먼저 처리한다.
+또한 interrupt의 on/off와 priority도 설정할 수 있다. **mask**(마스크)가 가능한 interrupt라면, interrupt가 발생했을 때 요구를 받아들일지 말지 결정할 수 있다. priority를 설정해 두면, 더 중요한 interrupt를 먼저 처리한다.
 
-> 대부분의 기계는 일정 시간이 지나거나, 일정 시간 간격으로 interrupt를 발생시킬 수 있는 내장 timer도 가지고 있다.(일정 시간마다 어느 program을 우선적으로 실행하는 방식으로 사용할 수 있다.)
+> NMI(non-maskable interrupt): interrupt mask가 불가능한 interrupt를 의미한다. 즉, 무시할 수 없는 매우 중요한 interrupt를 의미한다. 주로 정전, 하드웨어 고장 등 어찌할 수 없는 오류 등이 해당된다.
+
+대부분의 기계는 일정 시간이 지나거나, 일정 시간 간격으로 interrupt를 발생시킬 수 있는 내장 timer도 가지고 있다.(일정 시간마다 어느 program을 우선적으로 실행하는 방식으로 사용할 수 있다.)
 
 ---
 
@@ -215,11 +217,13 @@ CPU가 주의를 기울여야 하는 peripheral은 interrupt request를 생성�
 
 그렇다면 여러 program을 동시에 실행시키려면 어떻게 해야 할까? 우선 각 program을 전환시켜 줄 수 있는 일종의 관리자 program이 필요하다. 이를 OS 또는 OS **kernel**이라고 부른다.
 
-> OS와 OS가 관리하는 program을 구분하기 위해, OS를 **system program**이라고 부른다. 다른 모든 program은 user program이나 **process**(프로세스)라고 한다.
+참고로 OS와 OS가 관리하는 program을 구분하기 위해, OS를 **system program**이라고도 부른다. 다른 모든 program은 user program이나 **process**(프로세스)라고 한다.
 
 ![간단한 OS](images/simple_os.png)
 
 위는 간단하게 나타낸 OS 작동 방식이다. OS는 timer를 사용해서 process(user program)의 실행 시간을 조절한다. 이런 scheduling(스케줄링) 기법을 **time slicing**(시분할)이라고 한다.
+
+> [OS: schecular란?](https://k39335.tistory.com/32)
 
 > [schedular와 dispatcher의 차이](https://clucle.tistory.com/entry/Scheduler%EC%99%80-Dispatcher%EC%9D%98-%EC%B0%A8%EC%9D%B4)
 
@@ -307,7 +311,7 @@ MMU는 **virtual address**(가상 주소)와 **physical address**(물리 주소)
 
 하지만 16bit만 해도 page가 굉장히 늘었다. 64bit라면 4GiB의 page table이 필요하고 page 크기도 4GiB가 될 것이다. 하지만 이런 조건을 만족하지 못하는 시스템이 많이 존재하므로 문제가 생긴다.
 
-전체 **page table entry**(페이지 테이블 항목)은 주 memory에 저장되는데, 만약 주 memory가 부족하면 disk에 저장된다. 그리고 MMU는 저장된 page table 항목 중 일부를 필요할 때만 자신의 page table로 읽어 들인다.
+전체 **page table entry**(페이지 테이블 항목)은 main memory(주로 RAM)에 저장되는데, 만약 main memory가 부족하면 disk에 저장된다. 그리고 MMU는 저장된 page table 항목 중 일부를 필요할 때만 자신의 page table로 읽어 들인다.
 
 일부 MMU는 page table에 control bit를 제공한다. 이런 control bit의 대표적인 예시로 no execute bit가 있다.
 
@@ -331,7 +335,7 @@ MMU는 **virtual address**(가상 주소)와 **physical address**(물리 주소)
 
 앞에서 MMU가 virtual address를 physical address로 translation했다. 하지만 virtual memory는 그 이상이다. page fault 메커니즘으로 program은 필요한 만큼(virtual memory address 범위 내에서) 많은 memory를 가진다고 판단할 수 있게 되었다. 
 
-만약 사용 가능한 (physical) memory 크기보다 더 필요하다면 다음과 같은 과정을 거친다. 아래 과정처럼 page를 처리하는 것을 통틀어 **demand paging**(요구불 페이징)이라고 한다.
+만약 사용 가능한 (physical) memory 크기보다 더 필요하다면 다음과 같은 과정을 거친다. 아래 과정처럼 page를 처리하는 것을 통틀어 **demand paging**(요구 페이징)이라고 한다.
 
 - OS는 현재 필요하지 않은 memory page를 더 느리지만 용량은 큰 disk로 옮긴다.
 
@@ -399,3 +403,80 @@ cache memory에도 몇 가지 hierarchy가 있다. 모든 cache가 같은 칩에
 
 ---
 
+## 5.11 coprocessor
+
+processor core는 아주 복잡한 회로로 구성된다. 몇 가지 연산을 **coprocessor**(코프로세서)라는 더 단순한 회로에 위임하면, processor core가 일반적인 연산에 활용할 수 있는 공간을 더 확보할 수 있다.
+
+> 예전에는 한 칩 안에 모든 연산 회로를 넣기 어려워서 coprocessor를 사용했다. (예를 들어 floating point 연산 공간이 부족해서, floating point 연산용 coprocessor를 사용했다.)
+
+요즘은 graphics processing 등 여러 기능을 담당하는 coprocessor가 한 칩에 같이 들어 있는 경우가 많다.
+
+일부 coprocessor는 다른 일은 처리하지 않고 데이터 복사만 담당한다. 예를 들어 swapping 등의 이유로 disk에 데이터를 복사해야 하는 경우가 자주 발생할 수 있다. 따라서 이렇게 데이터 복사 담당을 두는 것이다. 이런 방식을 **DMA**(direct memory access. 직접 메모리 접근)라고 한다.
+
+> disk는 byte 단위로 접근이 불가능했고, 512 byte나 4,096 byte 등의 block으로 전송했다. 따라서 '여기서 이만큼의 데이터를 저쪽으로 복사하고, 끝나면 알려줘'와 같은 방식으로 DMA를 쓰며 CPU의 낭비를 막는 것이다.
+
+---
+
+## 5.12 memory상의 데이터 배치
+
+앞서 memory에 instruction과 data를 담는 것을 보았다. 이때 이렇게 memory에 data를 load한 상태에서 필요할 때마다 호출하는 data를 **static**(정적) data라고 지칭한다. 
+
+또한 memory에는 program을 실행할 때 사용하는 stack을 위한 memory도 필요했다. 따라서 여러 data 영역을 서로 충돌하지 않게 배치해야 한다. 아래는 MMU가 없을 때 폰 노이만 구조와 하버드 구조의 전형적인 메모리 배치를 보여준다.
+
+![메모리 배치](images/memory_placement.png)
+
+- 차이점은 하버드 구조에서는 instruction이 별도의 memory에 존재한다는 점뿐이다.
+
+다른 방법으로 memory를 사용할 수도 있다. 대부분의 program은 **dynamic**(동적) data를 다뤄야 한다. dynamic data란 <U>program을 실행하기 전에는 크기를 알 수 없는 data</U>를 뜻한다.
+
+> 예를 들어 서로 다른 program끼리 정보를 교환하기 위한 통합 채널로 사용하는 [messaging system](https://velog.io/@pood/%EB%A9%94%EC%8B%9C%EC%A7%95-%EC%8B%9C%EC%8A%A4%ED%85%9C)이 dynamic data의 예시다. messaging system은 저장해야 할 message 개수나 각 message 크기를 미리 알 수 없다.
+
+dynamic data는 주로 static data가 차지하는 영역의 <U>바로 위 영역에 쌓이며</U>, 이를 **heap**(힙)이라고 부른다. 더 많은 data를 저장해야 할 경우 <U>stack은 아래로 자라나지만</U>, 그에 반해 <U>heap은 위로 자라난다.<U>
+
+![힙이 있는 경우의 메모리 배치](images/memory_placement_heap.png)
+
+위 그림이 heap이 있는 경우의 memory placement이다. 따라서 heap과 stack이 서로 충돌하지 않게 해야 한다.
+
+memory placement에는 몇 가지 사소한 변형이 있다. 예를 들어 일부 processor에서는 memory의 시작 부분이나 끝 부분에 interrupt vector를 저장하는 영역이나, on-chip I/O device를 제어하기 위한 register를 확보해 두기도 한다.
+
+> microcomputer에 MMU가 없는 경우가 많기 때문에, 이런 memory placement를 자주 볼 수 있다.
+
+반면 MMU가 쓰이는 경우에는 instruction, data, stack이 각기 다른 physical memory page에 mapping되고, 필요에 따라 할당된 크기를 변경할 수 있다. 하지만 program이 바라보는 memory(virtual memory)는 여전히 앞에서 설명한 것과 같은 memory placement를 사용한다.
+
+---
+
+## 5.13 program 실행
+
+앞서 function을 살펴본 적이 있는데, program 역시 여러 유용한 function을 필요로 한다. 이때 매번 새로운 function을 작성하는 대신 function을 한데 모은 **library**(라이브러리)를 사용한다.
+
+본격적인 program은 library뿐만 아니라 여러 조각으로 이뤄진다. program 전부를 한 파일로 저장할 수도 있지만, 이를 여러 파일로 나누는 편이 장점이 더 많다.(대표적으로 여러 사람이 한 program의 여러 부분을 동시에 개발할 수 있다는 점이다.)
+
+- linker
+
+따라서 여러 조각으로 나눈 program을 하나로 엮을 **link** 방법이 필요하다. 각 program을 link하기 편한 형식의 **intermediate file**(매개 파일)로 나누고, **linker**(링커)라는 특별한 program을 사용해 여러 조각을 하나로 link한다. 
+
+> **ELF**(Executable and Linkable Format. 실행과 링크가 가능한 형식)이 현재 가장 유명한 intermediate file format이다.
+
+> ELF를 비유하자면 마치 교차로 광고와 같이 여러 section으로 이뤄진다. '팝니다' section에는 '나는 cube라는 function을 제공합니다'라는 광고가 있다. 비슷하게 '삽니다' section에는 '나는 data라는 variable을 찾습니다'라는 광고가 있다.
+
+linker는 이런 모든 광고를 서로 **resolve**(해소)해서 실제로 실행할 수 있는 program을 만들어내는 program이다. 과거에는 library를 필요한 function이 든 파일로 간주하고 program의 나머지 부분과 직접 link했다. 이런 방식을 **static linking**(정적 링크)라고 한다.
+
+- dynamic linking
+
+하지만 프로그래머들은 library가 여러 program에서 공통적으로 쓰인다는 점에서 착안해, static linking로 귀중한 memory를 낭비하지 않도록 **shared library**(공유 라이브러리)를 사용하는 방법을 제시했다. 이런 방식을 **dynamic linking**(동적 링크)라고 한다.
+
+![공유 라이브러리](images/shared_library.png)
+
+위가 바로 shared library를 표현한 그림이다. 여러 program이 공통으로 function을 invoke하기 때문에, 이 library function을 작성할 때는 invoke하는 program의 stack과 heap을 사용하도록 설계해야 한다.
+
+- runtime library
+
+program은 첫 번째 instruction이 위치한 address를 지닌다. 이를 **entry point**(진입점)이라고 한다. 그런데 실은 program이 실행될 때 가장 먼저 실행되는 instruction은 entry point에 있는 instruction이 아니다.
+
+program을 이루는 모든 부분이 하나로 합쳐지며 executable(실행파일)을 이룰 때 **runtime library**(런타임 라이브러리)가 추가된다. 이 runtime library에 있는 instruction이 먼저 실행되고 나중에 entry point의 instruction이 실행되는 것이다.
+
+이 runtime library는 memory 설정을 책임진다. 이 말은 runtime library가 stack과 heap 영역을 설정한다는 뜻이다. 또한 static data에 위치한 data의 초깃값도 설정한다. 이런 값들은 executable에 들어 있고, system에서 memory를 할당받은 직후 executable에서 memory로 복사된다.
+
+> runtime library는 위에서 언급한 기능 말고도 훨씬 더 많을 기능을 수행한다.(특히 언어가 복잡할수록 기능이 더 복잡해진다.)
+
+---

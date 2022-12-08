@@ -17,11 +17,53 @@
 
 - **컴퓨터 아키텍처 전반을 공부한다.**
 
-  > 기초 전자회로, 게이트부터 시작해서 메모리, CPU, I/O, 컴퓨터 아키텍처 전반을 공부하기
+  > 기초 논리 회로부터 시작해서 memory, CPU, I/O device 등 컴퓨터 아키텍처 전반을 공부하기
 
 - **웹과 C 프로그램으로 직접 설계해 보기**
 
   > 이론을 바탕으로 실제 설계를 진행하기
+
+</br>
+
+## 🚩 정리한 문서 목록
+
+### 📔 컴퓨터 기초
+
+ - [컴퓨터의 언어 체계](https://github.com/erectbranch/Computer_Architecture/tree/master/ch01)
+
+   > [수의 표현] bit, 논리 연산, LSB/MSB, one's/two's complement 표현법, floating point(single precision/double precision), 8진법과 16진법, bit group 명칭
+
+   > 텍스트 표현법: ASCII/UTF-8 , 문자를 사용한 수 표현법: QP encoding/base64 encoding, 색 표현법
+
+ - [전자 회로의 조합 논리](https://github.com/erectbranch/Computer_Architecture/tree/master/ch02)
+
+   > [신호 처리] distortion을 이용한 Analog to Digital, glitch, hystersis, differential signaling
+
+   > [조합 논리] 기본적인 logic gate, gate를 조합한 여러 회로: adder, decoder, demux, selector(mux)
+
+ - [메모리와 디스크의 핵심: 순차 논리](https://github.com/erectbranch/Computer_Architecture/tree/master/ch03)
+
+   > [신호의 발생과 저장 회로] oscillator, clock, latch, gated latch, flip-flop, counter, register
+
+   > [memory] address, addressing, RAM, ROM, block device(disk drive), flash memory, 오류 감지
+
+### 💽 컴퓨터 구조
+
+ - [컴퓨터 내부 구조](https://github.com/erectbranch/Computer_Architecture/tree/master/ch04)
+
+   > memory address bus, I/O device, instruction 구성, address extension register, addressing: direct/ indirect/immediate, opcode, RISC/CISC
+
+   > [CPU] ALU: ALU opcode/shift 연산/accumulator, execution unit
+
+   > [데이터 경로와 제어] program counter, instruction register, addressing에 따른 구성 예제
+
+ - [컴퓨터 아키텍처와 운영체제](https://github.com/erectbranch/Computer_Architecture/tree/master/ch05)
+
+   > 폰 노이만/하버드 구조, processor core, microprocessor/microcomputer, coprocessor
+
+   > function, stack, recursion, interrupt, OS, process, relative/absolute addressing, system/user mode, memory hierarchy, heap, static/dynamic data, library
+
+   > [MMU 관련] virtual/physical address, page, no execute bit, fage fault exception, virtual memory
 
 </br>
 

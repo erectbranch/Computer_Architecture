@@ -65,6 +65,14 @@
 
    > [MMU 관련] virtual/physical address, page, no execute bit, fage fault exception, virtual memory
 
+### 💻 프로그래밍과 알고리즘
+
+ - [애플리케이션 프로그래밍과 시스템 프로그래밍](https://github.com/erectbranch/Computer_Architecture/tree/master/ch10)
+
+   > terminal, device driver, process context, context switching
+
+   > buffer(queue), echo, input buffer, output buffer, standard I/O, handle, file descriptor, circular buffer, runtime library
+
 </br>
 
 ## :mag: 목차
